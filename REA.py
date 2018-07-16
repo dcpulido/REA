@@ -9,6 +9,7 @@ from colorlog import ColoredFormatter
 from HController import HController
 from MqttIface import MqttHand
 
+#TODO conf file param
 
 __author__ = "dcpulido91@gmail.com"
 
