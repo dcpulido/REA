@@ -1,0 +1,5 @@
+{
+  "status": "Context/Signal/status", 
+  "Trigger": "Context/Trigger", 
+  "itsSignal": "Context/Status/itsSignal"
+}

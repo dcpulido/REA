@@ -101,6 +101,6 @@ class TestMqttHand(unittest.TestCase):
         mq.shutdown()
         while cnt.message == None:
             pass
-        print cnt.message
         self.assertEqual(cnt.message["payload"], "Hello")
+print "TEST MQTT IFACE"
 unittest.main()

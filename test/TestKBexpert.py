@@ -25,9 +25,14 @@ facts = [{'sys': 'GenericContext',
 
 
 class TestKBExpert(unittest.TestCase):
-    def test_set_rules(self):
+    def test_KB(self):
         kb = KbExpert()
         self.assertEqual(kb.conf["name"], "KBExpert")
+
+    def test_set_rules(self):
+        kb = KbExpert()
+        kb.set_rules("rulename")
+        self.assertEqual(kb.rules, "rulename")
 
     def test_get_env(self):
         gn = Context()
@@ -44,4 +49,5 @@ class TestKBExpert(unittest.TestCase):
 
 
 if __name__ == '__main__':
+    print "KBEXPERT"
     unittest.main()

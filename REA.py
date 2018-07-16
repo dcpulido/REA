@@ -58,6 +58,20 @@ def get_general_conf(name):
 def shutdown():
     hcont.shutdown()
     iface.shutdown()
+
+
+def main():
+    try:
+        iface.start()
+        output(hcont.get_projects())
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        shutdown()
+    except AttributeError, e:
+        output(str(e), LOG_ENUM[4])
+        shutdown()
+
 if __name__ == '__main__':
 
     #log.debug("A quirky message only developers care about")
@@ -70,6 +84,7 @@ if __name__ == '__main__':
     GENERAL_CONF = get_general_conf("GENERAL")
     HCONTROLLER_CONF = get_general_conf("HCONTROLLER")
     MQTT_CONF = get_general_conf("MQTT_IFACE")
+    DAEMON_CONF = get_general_conf("READAEMON")
 
     iface = MqttHand(conf=MQTT_CONF,
                      log=log)
@@ -79,14 +94,6 @@ if __name__ == '__main__':
                         HCONTROLLER_CONF)
     iface.set_controller(hcont)
 
-    try:
-        iface.start()
-        
-        output(hcont.get_projects())
-        while True:
-            time.sleep(1)
-    except KeyboardInterrupt:
-        shutdown()
-    except AttributeError, e:
-        output(str(e), LOG_ENUM[4])
-        shutdown()
+    main()
+
+    

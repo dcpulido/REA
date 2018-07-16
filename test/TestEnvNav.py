@@ -80,4 +80,5 @@ class TestEnvNav(unittest.TestCase):
 
 
 if __name__ == '__main__':
+    print "TEST ENVNAV"
     unittest.main()

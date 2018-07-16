@@ -1,0 +1,16 @@
+{
+    "name": "GenericRuleName",
+    "priority": 0,
+    "true": [
+        "itsSignal"
+    ],
+    "false": [],
+    "value": [
+        {
+            "Trigger": "welcome"
+        },
+        {
+            "status":"$stat"
+        }
+    ]
+}

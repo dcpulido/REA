@@ -69,11 +69,9 @@ class KbExpert:
 
     def assert_rules(self):
         self.engine.activate(self.rules)
-        print "ENTER"
         for e in self.context_all_facts:
             self.engine.assert_(str(e['sys']), str(e['sens']), e['values'])
         try:
-            print "TRYING"
             vals, plans = self.engine.prove_1_goal(
                 self.rules+'.toret($sens,$value)')
             toret = dict(vals=vals, plans=plans)
