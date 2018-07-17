@@ -3,7 +3,6 @@ import sys
 import json
 from string import Template
 # TODO
-# read manifest to change rutes inside project
 # generate the krb
 # define responses
 # define torets
@@ -30,18 +29,33 @@ class Generator:
         manifest = self.get_manifest(name)
         if manifest != {}:
 
-            toret["rules"] = self.read_rules(name,
-                                             manifest)
+            toret["rules"] = self.read_rules(manifest)
             toret["varss"] = self.get_vars(toret["rules"])
             toret["context"] = self.generate_context(toret["varss"],
-                                                     name,
                                                      manifest)
-            toret["context_spec"] = self.generate_context_spec(name,
-                                                               manifest)
+            toret["context_spec"] = self.generate_context_spec(manifest)
             return True
         else:
             self.output("Project manifest doesnt exist", "critical")
             return False
+
+    def generation_templates(self, manifest):
+        # HERE FINISH METHOD
+        toret = {}
+        print self.conf["project_dir"] +manifest["name"] + "/" +manifest["conf"]["templates"]
+        try:
+            with open(self.conf["project_dir"] +
+                      manifest["name"] + "/" +
+                      manifest["conf"]["templates"]) as data_file:
+                toret = json.loads(data_file.read())
+            return toret
+        except IOError as e:
+            self.output("Not templates.json on " +
+                        manifest["conf"]["templates"], "critical")
+            return toret
+
+    def generate_krb_file(self, properties):
+        pass
 
     def get_manifest(self,
                      name):
@@ -51,27 +65,26 @@ class Generator:
                       name +
                       "/manifest.json") as data_file:
                 toret = json.loads(data_file.read())
+            if name != toret["name"]:
+                self.output("worng name on manifest or input: " + name,
+                            "critical")
+                return {}
             return toret
         except IOError as e:
             return toret
 
     def read_rules(self,
-                   name,
                    manifest):
         rules = []
-        if name != manifest["name"]:
-            self.output("worng name on manifest or input: " + name,
-                        "critical")
-            return None
         lst_Dir = os.walk(self.conf["project_dir"] +
-                          name +
+                          manifest["name"] +
                           "/" +
                           manifest["conf"]["rules"])
         for l in lst_Dir:
             for rul in l[2]:
                 try:
                     with open(self.conf["project_dir"] +
-                              name +
+                              manifest["name"] +
                               "/" +
                               manifest["conf"]["rules"] +
                               rul) as data_file:
@@ -105,7 +118,6 @@ class Generator:
 
     def generate_context(self,
                          varss,
-                         name,
                          manifest):
         context_temp = self._get_str_template("context")
         toret = dict(signal="", status="")
@@ -132,17 +144,17 @@ class Generator:
                 "=obj(False)\n"
         tt = context_temp.safe_substitute(toret)
         with open(self.conf["project_dir"] +
-                  name +
+                  manifest["name"] +
                   "/" +
                   manifest["conf"]["model"], 'w+') as ffile:
             ffile.write(tt)
         return tt
 
-    def generate_context_spec(self, name, manifest):
+    def generate_context_spec(self, manifest):
 
         self.toret = []
         sys.path.insert(0, self.conf["project_dir"] +
-                        name +
+                        manifest["name"] +
                         "/" +
                         manifest["conf"]["model"].split("/")[0])
         cc = manifest["conf"]["model"].split("/")[1].split(".")[0]
@@ -154,7 +166,7 @@ class Generator:
             str += '\t"' + \
                 s.split("/")[len(s.split("/")) - 1] + '":"' + s + '",\n'
         str = str[:len(str) - 2] + "\n}"
-        with open(self.conf["project_dir"] + name + "/spec/Context.json", 'w+') as ffile:
+        with open(self.conf["project_dir"] + manifest["name"] + "/spec/Context.json", 'w+') as ffile:
             ffile.write(json.dumps(json.loads(str), indent=2))
         return json.loads(str)
 

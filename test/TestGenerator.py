@@ -65,16 +65,11 @@ class TestGenerator(unittest.TestCase):
     def test_read_rules(self):
         gen = Generator(conf=conf)
         man = gen.get_manifest("test")
-        self.assertEqual(gen.read_rules("test", man)[0], rule)
-
-    def test_not_read_rules(self):
-        gen = Generator(conf=conf)
-        man = gen.get_manifest("test")
-        self.assertEqual(gen.read_rules("wrongname", man), None)
+        self.assertEqual(gen.read_rules(man)[0], rule)
 
     def test_get_vars(self):
         gen = Generator(conf)
-        rul = gen.read_rules("test", gen.get_manifest("test"))
+        rul = gen.read_rules(gen.get_manifest("test"))
         self.assertEqual(gen.get_vars(rul), varss)
 
     def test_not_get_vars(self):
@@ -83,8 +78,8 @@ class TestGenerator(unittest.TestCase):
 
     def test_generate_context(self):
         gen = Generator(conf)
-        rul = gen.read_rules("test", gen.get_manifest("test"))
-        gen.generate_context(gen.get_vars(rul), "test", gen.get_manifest("test"))
+        rul = gen.read_rules(gen.get_manifest("test"))
+        gen.generate_context(gen.get_vars(rul), gen.get_manifest("test"))
         aux =False
         try:
             from Context import Context
@@ -94,13 +89,17 @@ class TestGenerator(unittest.TestCase):
         self.assertEqual(aux,True)
 
     def test_get_template(self):
-                    gen = Generator(conf)
-                    self.assertEqual(gen._get_str_template("context").safe_substitute({}),template)
+        gen = Generator(conf)
+        self.assertEqual(gen._get_str_template("context").safe_substitute({}),template)
 
     def test_buid_project(self):
         gen = Generator(conf)
         self.assertEqual(gen.build_project(), True)
-        
+
+    def test_generation_templates(self):
+        gen = Generator(conf)
+        temp = gen.generation_templates(gen.get_manifest("test"))
+        self.assertNotEqual(temp, {})
 
 
 if __name__ == '__main__':

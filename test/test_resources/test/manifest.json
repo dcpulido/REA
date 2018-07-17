@@ -2,6 +2,7 @@
     "name":"test",
     "conf":{
         "spec":"spec/Context.json",
+        "templates":"spec/templates.json",
         "app":"app/",
         "model":"model/Context.py",
         "rules":"rules/",
