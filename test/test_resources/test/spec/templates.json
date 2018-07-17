@@ -1,8 +1,9 @@
 {
-    "name": "",
-    "toret": "",
-    "true": "\t\t$cont.$branch($sheet,True)",
-    "false": "",
-    "value": "",
-    "call": ""
+    "name": "$name\n",
+    "toret": "\ttoret($name,$result,$ret)",
+    "true": "\t\t$cont.$branch($sheet,True)\n",
+    "false": "\t\t$cont.$branch($sheet,False)\n",
+    "value": "\t\t$cont.$branch($sheet,$val)\n",
+    "trigger":"\t\t$cont.$sheet($val)\n",
+    "call": "\t\tpython($stat)\n"
 }

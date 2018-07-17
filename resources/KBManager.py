@@ -73,7 +73,7 @@ class KbExpert:
             self.engine.assert_(str(e['sys']), str(e['sens']), e['values'])
         try:
             vals, plans = self.engine.prove_1_goal(
-                self.rules+'.toret($sens,$value)')
+                self.rules+'.toret($sens,$value,$ret)')
             toret = dict(vals=vals, plans=plans)
             self.output(vals, "debug")
             self.engine.reset()

@@ -26,8 +26,14 @@ rule = {
             "status": "$stat"
         }
     ],
-    "call": [],
-    "toret": [],
+    "call": [
+        "exp.somethin()",
+        "exp.something2()"
+    ],
+    "toret": {
+        "ret": "ex.toret()",
+        "result": "ex.result()"
+    },
     "meta": {}
 }
 
@@ -128,28 +134,42 @@ class TestGenerator(unittest.TestCase):
         meta = gen.build_meta_project()
         temp = gen.generation_templates(meta["manifest"])
         self.assertEqual(gen._krb_true(meta, temp["true"], meta["rules"][0]["true"]),
-                         "\t\tContext.Status(itsSignal,True)")
-    """
-    def _krb_false(self, meta, template, values):
-        toret = ""
-        return toret
+                         "\t\tContext.Status(itsSignal,True)\n")
 
-    def _krb_name(self, meta, template, values):
-        toret = ""
-        return toret
+    def test_krb_false(self):
+        gen = Generator(conf)
+        meta = gen.build_meta_project()
+        temp = gen.generation_templates(meta["manifest"])
+        self.assertEqual(gen._krb_false(meta, temp["false"], meta["rules"][0]["true"]),
+                         "\t\tContext.Status(itsSignal,False)\n")
 
-    def _krb_toret(self, meta, template, values):
-        toret = ""
-        return toret
+    def test_krb_name(self):
+        gen = Generator(conf)
+        meta = gen.build_meta_project()
+        temp = gen.generation_templates(meta["manifest"])
+        self.assertEqual(gen._krb_name(meta, temp["name"], "test"),
+                         "test\n")
 
-    def _krb_call(self, meta, template, values):
-        toret = ""
-        return toret
+    def test_krb_toret(self):
+        gen = Generator(conf)
+        meta = gen.build_meta_project()
+        temp = gen.generation_templates(meta["manifest"])
+        self.assertEqual(gen._krb_toret(meta, temp["toret"], meta["rules"][0]["toret"]),
+                         "\ttoret(test,ex.result(),ex.toret())")
 
-    def _krb_value(self, meta, template, values):
-        toret = ""
-        return toret
-    """
+    def test_krb_call(self):
+        gen = Generator(conf)
+        meta = gen.build_meta_project()
+        temp = gen.generation_templates(meta["manifest"])
+        self.assertEqual(gen._krb_call(meta, temp["call"], meta["rules"][0]["call"]),
+                         "\t\tpython(exp.somethin())\n\t\tpython(exp.something2())\n")
+
+    def test_krb_value(self):
+        gen = Generator(conf)
+        meta = gen.build_meta_project()
+        temp = gen.generation_templates(meta["manifest"])
+        self.assertEqual(gen._krb_value(meta, temp["value"], meta["rules"][0]["value"]),
+                         "\t\tContext.Trigger(welcome)\n\t\tContext.Signal(status,\"\")\n")
 
 
 if __name__ == '__main__':

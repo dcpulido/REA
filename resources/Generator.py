@@ -23,15 +23,15 @@ class Generator:
         self.log = log
 
     def generate_rules(self, meta):
-        meta["templates"] = self.generation_templates(meta["manifest"])
         krb = ""
         for rule in meta["rules"]:
             for key in rule.keys():
                 if key != "meta":
                     f = getattr(self, "_krb_"+key)
                     krb += f(meta, meta["templates"][key], rule[key])
+        #HERE MONTAR cODIGO
 
-        print krb
+        # print krb
 
     def _krb_true(self,
                   meta,
@@ -45,24 +45,64 @@ class Generator:
                                                    sheet=sheet))
         return toret
 
-    def _krb_false(self, meta, template, values):
+    def _krb_false(self,
+                   meta,
+                   template,
+                   values):
         toret = ""
+        for v in values:
+            cont, branch, sheet = meta["context_spec"][v].split("/")
+            toret += template.safe_substitute(dict(cont=cont,
+                                                   branch=branch,
+                                                   sheet=sheet))
         return toret
 
-    def _krb_name(self, meta, template, values):
-        toret = ""
+    def _krb_name(self,
+                  meta,
+                  template,
+                  values):
+        toret = template.safe_substitute(dict(name=values))
         return toret
 
-    def _krb_toret(self, meta, template, values):
+    def _krb_toret(self,
+                   meta,
+                   template,
+                   values):
         toret = ""
+        toret += template.safe_substitute(dict(name=meta["name"],
+                                               result=values["result"],
+                                               ret=values["ret"]))
         return toret
 
-    def _krb_call(self, meta, template, values):
+    def _krb_call(self,
+                  meta,
+                  template,
+                  values):
         toret = ""
+        for v in values:
+            toret += template.safe_substitute(dict(stat=v))
         return toret
 
-    def _krb_value(self, meta, template, values):
+    def _krb_value(self,
+                   meta,
+                   template,
+                   values):
         toret = ""
+        for v in values:
+            if meta["context_spec"][v.keys()[0]].split("/")[1] == "Trigger":
+                cont, sheet = meta["context_spec"][v.keys()[0]].split("/")
+                val = v[v.keys()[0]]
+                toret += meta["templates"]["trigger"].safe_substitute(dict(cont=cont,
+                                                                           sheet=sheet,
+                                                                           val=val))
+            else:
+                cont, branch, sheet = meta["context_spec"][v.keys()[
+                    0]].split("/")
+                val = v[v.keys()[0]]
+                toret += template.safe_substitute(dict(cont=cont,
+                                                       branch=branch,
+                                                       sheet=sheet,
+                                                       val=val))
         return toret
 
     def build_meta_project(self, name=None):
@@ -71,14 +111,14 @@ class Generator:
             name = self.conf["project_name"]
         manifest = self.get_manifest(name)
         if manifest != {}:
-
+            toret["name"] = name
             toret["rules"] = self.read_rules(manifest)
             toret["varss"] = self.get_vars(toret["rules"])
             toret["context"] = self.generate_context(toret["varss"],
                                                      manifest)
             toret["context_spec"] = self.generate_context_spec(manifest)
             toret["manifest"] = manifest
-
+            toret["templates"] = self.generation_templates(toret["manifest"])
             return toret
         else:
             self.output("Project manifest doesnt exist", "critical")

@@ -38,7 +38,8 @@ def populate(engine):
   bc_rule.bc_rule('welcome', This_rule_base, 'toret',
                   welcome, None,
                   (pattern.pattern_literal('welcome'),
-                   contexts.variable('som'),),
+                   contexts.variable('som'),
+                   pattern.pattern_literal('hol'),),
                   (),
                   (pattern.pattern_literal('itsSignal'),
                    contexts.variable('som'),))

@@ -1,4 +1,4 @@
 welcome
-    use toret(welcome,$som)
+    use toret(welcome,$som,hol)
     when
         GenericContext.Signal(itsSignal,$som)

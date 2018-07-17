@@ -9,10 +9,16 @@
             "Trigger": "welcome"
         },
         {
-            "status":"$stat"
+            "status": "$stat"
         }
     ],
-    "call":[],
-    "toret":[],
-    "meta":{}
+    "call": [
+        "exp.somethin()",
+        "exp.something2()"
+    ],
+    "toret": {
+        "ret": "ex.toret()",
+        "result": "ex.result()"
+    },
+    "meta": {}
 }
