@@ -19,75 +19,100 @@ class Generator:
         self.conf = conf
         if conf is None:
             self.conf = dict(project_dir="./projects/",
-                             project_name="",
+                             project_name="default",
                              template_dir="./templates")
-        self.rules = []
-        self.templates = {}
-        self.context = {}
-        self.vars = {}
+        self.log = log
 
-    def read_spec_templates(self, name=None):
+    def build_project(self, name=None):
+        toret = {}
         if name is None:
             name = self.conf["project_name"]
-        pass
+        manifest = self.get_manifest(name)
+        if manifest != {}:
 
-    def read_spec_context(self, name=None):
-        if name is None:
-            name = self.conf["project_name"]
-        pass
+            toret["rules"] = self.read_rules(name,
+                                             manifest)
+            toret["varss"] = self.get_vars(toret["rules"])
+            toret["context"] = self.generate_context(toret["varss"],
+                                                     name,
+                                                     manifest)
+            toret["context_spec"] = self.generate_context_spec(name,
+                                                               manifest)
+            return True
+        else:
+            self.output("Project manifest doesnt exist", "critical")
+            return False
 
-    def read_spec_imperative(self, name=None):
-        if name is None:
-            name = self.conf["project_name"]
-        pass
+    def get_manifest(self,
+                     name):
+        toret = {}
+        try:
+            with open(self.conf["project_dir"] +
+                      name +
+                      "/manifest.json") as data_file:
+                toret = json.loads(data_file.read())
+            return toret
+        except IOError as e:
+            return toret
 
     def read_rules(self,
-                   name=None):
-        self.rules = []
-        if name is None:
-            name = self.conf["project_name"]
+                   name,
+                   manifest):
+        rules = []
+        if name != manifest["name"]:
+            self.output("worng name on manifest or input: " + name,
+                        "critical")
+            return None
         lst_Dir = os.walk(self.conf["project_dir"] +
                           name +
-                          "/rules")
+                          "/" +
+                          manifest["conf"]["rules"])
         for l in lst_Dir:
             for rul in l[2]:
                 try:
                     with open(self.conf["project_dir"] +
                               name +
-                              "/rules/" +
+                              "/" +
+                              manifest["conf"]["rules"] +
                               rul) as data_file:
-                        self.rules.append(json.loads(data_file.read()))
+                        rules.append(json.loads(data_file.read()))
                 except ValueError:
                     self.output("json error on " + rul, "critical")
-        return self.rules
+                except IOError:
+                    self.output("wrong directorie ", "critical")
+        return rules
 
-    def get_vars(self, rules=None):
-        self.vars = dict(signal=[], status=[])
+    def get_vars(self,
+                 rules):
+        varss = dict(signal=[], status=[])
         if rules is None:
-            rules = self.rules
+            return varss
 
         for rul in rules:
             for tr in rul["true"]:
-                if tr not in self.vars["status"]:
-                    self.vars["status"].append(tr)
+                if tr not in varss["status"]:
+                    varss["status"].append(tr)
             for tr in rul["false"]:
-                if tr not in self.vars["status"]:
-                    self.vars["status"].append(tr)
+                if tr not in varss["status"]:
+                    varss["status"].append(tr)
             for tr in rul["value"]:
-                if tr not in self.vars["signal"] and \
+                if tr not in varss["signal"] and \
                         tr.keys()[0] != "Trigger":
                     if tr[tr.keys()[0]][0] == "$":
                         tr[tr.keys()[0]] = ""
-                    self.vars["signal"].append(tr)
-        return self.vars
+                    varss["signal"].append(tr)
+        return varss
 
     def generate_context(self,
                          varss,
-                         name=None):
-        if name is None:
-            name = self.conf["project_name"]
+                         name,
+                         manifest):
         context_temp = self._get_str_template("context")
         toret = dict(signal="", status="")
+        if len(varss["signal"]) == 0:
+            toret["signal"] += ESPACES + "pass"
+        if len(varss["status"]) == 0:
+            toret["status"] += ESPACES + "pass"
         for sig in varss["signal"]:
             if type(sig[sig.keys()[0]]) is str:
                 sig[sig.keys()[0]] = "\"\""
@@ -106,28 +131,24 @@ class Generator:
                 sig +\
                 "=obj(False)\n"
         tt = context_temp.safe_substitute(toret)
-        with open(self.conf["project_dir"] + name + "/model/Context.py", 'w+') as ffile:
+        with open(self.conf["project_dir"] +
+                  name +
+                  "/" +
+                  manifest["conf"]["model"], 'w+') as ffile:
             ffile.write(tt)
         return tt
 
-    def generate_context_spec(self, name=None):
-        if name is None:
-            name = self.conf["project_name"]
+    def generate_context_spec(self, name, manifest):
 
-        def _getPaths(nav, path):
-            for k in dir(nav):
-                if k[0] != "_":
-                    if hasattr(getattr(nav, k),
-                               'value'):
-                        self.toret.append(path + k)
-                    else:
-                        _getPaths(getattr(nav, k),
-                                  path + k + "/")
         self.toret = []
-        sys.path.insert(0, self.conf["project_dir"] + name + "/model/")
-        from Context import Context
+        sys.path.insert(0, self.conf["project_dir"] +
+                        name +
+                        "/" +
+                        manifest["conf"]["model"].split("/")[0])
+        cc = manifest["conf"]["model"].split("/")[1].split(".")[0]
+        exec "from " + cc + " import " + cc
         c = Context()
-        _getPaths(c, c.__module__+"/")
+        self._getPaths(c, c.__module__+"/")
         str = "{\n"
         for s in self.toret:
             str += '\t"' + \
@@ -136,6 +157,16 @@ class Generator:
         with open(self.conf["project_dir"] + name + "/spec/Context.json", 'w+') as ffile:
             ffile.write(json.dumps(json.loads(str), indent=2))
         return json.loads(str)
+
+    def _getPaths(self, nav, path):
+        for k in dir(nav):
+            if k[0] != "_":
+                if hasattr(getattr(nav, k),
+                           'value'):
+                    self.toret.append(path + k)
+                else:
+                    self._getPaths(getattr(nav, k),
+                                   path + k + "/")
 
     def _get_str_template(self, name):
         with open(self.conf["template_dir"] +

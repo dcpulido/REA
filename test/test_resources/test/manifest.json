@@ -1,0 +1,10 @@
+{
+    "name":"test",
+    "conf":{
+        "spec":"spec/Context.json",
+        "app":"app/",
+        "model":"model/Context.py",
+        "rules":"rules/",
+        "conf":"conf/"
+    }
+}

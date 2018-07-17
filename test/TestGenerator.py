@@ -54,36 +54,54 @@ class TestGenerator(unittest.TestCase):
         gen = Generator(conf=conf)
         self.assertEqual(gen.conf["project_dir"], "./test_resources/")
 
+    def test_get_manifest(self):
+        gen = Generator(conf)
+        self.assertNotEqual(gen.get_manifest("test"), {})
+
+    def test_not_get_manifest(self):
+        gen = Generator(conf)
+        self.assertEqual(gen.get_manifest("tost"), {})
+
     def test_read_rules(self):
         gen = Generator(conf=conf)
-        self.assertEqual(gen.read_rules()[0], rule)
+        man = gen.get_manifest("test")
+        self.assertEqual(gen.read_rules("test", man)[0], rule)
+
+    def test_not_read_rules(self):
+        gen = Generator(conf=conf)
+        man = gen.get_manifest("test")
+        self.assertEqual(gen.read_rules("wrongname", man), None)
 
     def test_get_vars(self):
         gen = Generator(conf)
-        gen.read_rules()
-        self.assertEqual(gen.get_vars(), varss)
+        rul = gen.read_rules("test", gen.get_manifest("test"))
+        self.assertEqual(gen.get_vars(rul), varss)
 
-    def test_get_template(self):
+    def test_not_get_vars(self):
         gen = Generator(conf)
-        self.assertEqual(gen._get_str_template("context").safe_substitute({}),template)
+        self.assertEqual(gen.get_vars(None)["signal"], [])
 
     def test_generate_context(self):
         gen = Generator(conf)
-        gen.read_rules()
-        gen.generate_context(gen.get_vars())
+        rul = gen.read_rules("test", gen.get_manifest("test"))
+        gen.generate_context(gen.get_vars(rul), "test", gen.get_manifest("test"))
         aux =False
         try:
             from Context import Context
             aux = True
         except ImportError:
             aux = False
-        self.assertEqual(aux,True) 
+        self.assertEqual(aux,True)
 
-    def test_get_spec(self):
+    def test_get_template(self):
+                    gen = Generator(conf)
+                    self.assertEqual(gen._get_str_template("context").safe_substitute({}),template)
+
+    def test_buid_project(self):
         gen = Generator(conf)
-        gen.read_rules()
-        gen.generate_context(gen.get_vars())
-        self.assertEqual(gen.generate_context_spec(), spec)
+        self.assertEqual(gen.build_project(), True)
+        
+
 
 if __name__ == '__main__':
     print "GENERATOR"

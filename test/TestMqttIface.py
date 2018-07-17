@@ -102,5 +102,4 @@ class TestMqttHand(unittest.TestCase):
         while cnt.message == None:
             pass
         self.assertEqual(cnt.message["payload"], "Hello")
-print "TEST MQTT IFACE"
 unittest.main()

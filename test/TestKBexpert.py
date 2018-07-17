@@ -34,18 +34,23 @@ class TestKBExpert(unittest.TestCase):
         kb.set_rules("rulename")
         self.assertEqual(kb.rules, "rulename")
 
+    def test_getSet_context_tree(self):
+        gn = Context()
+        kb = KbExpert()
+        kb.add_context_tree(gn)
+        self.assertEqual(len(kb.get_contexts_tree().get_contexts()),1)
+
     def test_get_env(self):
         gn = Context()
         kb = KbExpert()
         kb.add_context_tree(gn)
-        self.assertEqual(kb.get_facts_from_all_contexts(),facts)
+        self.assertEqual(kb.get_facts_from_all_contexts(), facts)
 
     def test_assert_rules(self):
         gn = Context()
         kb = KbExpert()
         kb.add_context_tree(gn)
-        kb.assert_rules()
-
+        self.assertEqual(kb.assert_rules()["vals"]["sens"], "welcome")
 
 
 if __name__ == '__main__':
