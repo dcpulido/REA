@@ -22,7 +22,50 @@ class Generator:
                              template_dir="./templates")
         self.log = log
 
-    def build_project(self, name=None):
+    def generate_rules(self, meta):
+        meta["templates"] = self.generation_templates(meta["manifest"])
+        krb = ""
+        for rule in meta["rules"]:
+            for key in rule.keys():
+                if key != "meta":
+                    f = getattr(self, "_krb_"+key)
+                    krb += f(meta, meta["templates"][key], rule[key])
+
+        print krb
+
+    def _krb_true(self,
+                  meta,
+                  template,
+                  values):
+        toret = ""
+        for v in values:
+            cont, branch, sheet = meta["context_spec"][v].split("/")
+            toret += template.safe_substitute(dict(cont=cont,
+                                                   branch=branch,
+                                                   sheet=sheet))
+        return toret
+
+    def _krb_false(self, meta, template, values):
+        toret = ""
+        return toret
+
+    def _krb_name(self, meta, template, values):
+        toret = ""
+        return toret
+
+    def _krb_toret(self, meta, template, values):
+        toret = ""
+        return toret
+
+    def _krb_call(self, meta, template, values):
+        toret = ""
+        return toret
+
+    def _krb_value(self, meta, template, values):
+        toret = ""
+        return toret
+
+    def build_meta_project(self, name=None):
         toret = {}
         if name is None:
             name = self.conf["project_name"]
@@ -34,20 +77,25 @@ class Generator:
             toret["context"] = self.generate_context(toret["varss"],
                                                      manifest)
             toret["context_spec"] = self.generate_context_spec(manifest)
-            return True
+            toret["manifest"] = manifest
+
+            return toret
         else:
             self.output("Project manifest doesnt exist", "critical")
             return False
 
     def generation_templates(self, manifest):
-        # HERE FINISH METHOD
         toret = {}
-        print self.conf["project_dir"] +manifest["name"] + "/" +manifest["conf"]["templates"]
         try:
             with open(self.conf["project_dir"] +
                       manifest["name"] + "/" +
                       manifest["conf"]["templates"]) as data_file:
-                toret = json.loads(data_file.read())
+                try:
+                    toret = json.loads(data_file.read())
+                except ValueError as e:
+                    return toret
+            for tem in toret.keys():
+                toret[tem] = Template(toret[tem])
             return toret
         except IOError as e:
             self.output("Not templates.json on " +

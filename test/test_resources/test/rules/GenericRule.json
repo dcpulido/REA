@@ -1,6 +1,5 @@
 {
     "name": "GenericRuleName",
-    "priority": 0,
     "true": [
         "itsSignal"
     ],
@@ -12,5 +11,8 @@
         {
             "status":"$stat"
         }
-    ]
+    ],
+    "call":[],
+    "toret":[],
+    "meta":{}
 }
