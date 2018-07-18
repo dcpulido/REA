@@ -1,5 +1,6 @@
 import sys
 import os
+import json
 sys.path.insert(0, "./test_resources")
 sys.path.insert(0, "./test_resources/test/model/")
 sys.path.insert(0, "../resources")
@@ -10,7 +11,8 @@ import unittest
 
 conf = dict(project_dir="./test_resources/",
             project_name="test",
-            template_dir="./test_resources/")
+            template_dir="./test_resources/",
+            output_dir="./test_resources/")
 
 rule = {
     "name": "GenericRuleName",
@@ -34,7 +36,9 @@ rule = {
         "ret": "ex.toret()",
         "result": "ex.result()"
     },
-    "meta": {}
+    "meta": {
+        "priority": 0
+    }
 }
 
 template = """class obj:
@@ -69,9 +73,9 @@ spec = {
     "itsSignal": "Context/Status/itsSignal"
 }
 
-varss = {'status': ['itsSignal'], 'signal': [{'status': ''}]}
+varss = {'status': ['itsSignal'], 'signal': [{'status': '$stat'}]}
 
-
+krb_output = """GenericRuleName\n\ttoret(test,ex.result(),ex.toret())\n\twhen\n\t\tContext.Status(itsSignal,True)\n\t\tContext.Trigger(welcome)\n\t\tContext.Signal(status,$stat)\n\t\tpython(exp.somethin())\n\t\tpython(exp.something2())\n\n\nbc_extras\n    import os\n    import json\n    import sys\n    import thread\n    from paho.mqtt import publish\n    sys.path.insert(0, './resources/')\n    sys.path.insert(0, './ifaces/')\n    sys.path.insert(0, './dbcon/')\n    sys.path.insert(0, './modules/')\n    """
 class TestGenerator(unittest.TestCase):
     def test_Gen(self):
         gen = Generator(conf=conf)
@@ -155,7 +159,7 @@ class TestGenerator(unittest.TestCase):
         meta = gen.build_meta_project()
         temp = gen.generation_templates(meta["manifest"])
         self.assertEqual(gen._krb_toret(meta, temp["toret"], meta["rules"][0]["toret"]),
-                         "\ttoret(test,ex.result(),ex.toret())")
+                         "\ttoret(test,ex.result(),ex.toret())\n")
 
     def test_krb_call(self):
         gen = Generator(conf)
@@ -169,7 +173,26 @@ class TestGenerator(unittest.TestCase):
         meta = gen.build_meta_project()
         temp = gen.generation_templates(meta["manifest"])
         self.assertEqual(gen._krb_value(meta, temp["value"], meta["rules"][0]["value"]),
-                         "\t\tContext.Trigger(welcome)\n\t\tContext.Signal(status,\"\")\n")
+                         "\t\tContext.Trigger(welcome)\n\t\tContext.Signal(status,$stat)\n")
+
+    def test_order_krb(self):
+        gen = Generator(conf)
+        krb = [dict(meta=dict(priority=2)),
+               dict(meta=dict(priority=0)),
+               dict(meta=dict(priority=1))]
+        self. assertEqual(gen._order_krb(krb), [dict(meta=dict(priority=0)),
+                                                dict(meta=dict(priority=1)),
+                                                dict(meta=dict(priority=2))])
+
+    def test_generate_str_krb(self):
+        gen = Generator(conf)
+        meta = gen.build_meta_project()
+        self.assertEqual(gen.generate_rules(meta), krb_output)
+
+    def test_krb_output(self):
+        gen = Generator(conf)
+        meta = gen.build_meta_project()
+        self.assertNotEqual(gen.generate_rules(meta), False)
 
 
 if __name__ == '__main__':

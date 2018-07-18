@@ -1,6 +1,6 @@
 {
     "name": "$name\n",
-    "toret": "\ttoret($name,$result,$ret)",
+    "toret": "\ttoret($name,$result,$ret)\n",
     "true": "\t\t$cont.$branch($sheet,True)\n",
     "false": "\t\t$cont.$branch($sheet,False)\n",
     "value": "\t\t$cont.$branch($sheet,$val)\n",

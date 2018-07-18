@@ -1,11 +1,9 @@
 import os
 import sys
 import json
+import copy
 from string import Template
 # TODO
-# generate the krb
-# define responses
-# define torets
 
 
 ESPACES = "    "
@@ -19,19 +17,75 @@ class Generator:
         if conf is None:
             self.conf = dict(project_dir="./projects/",
                              project_name="default",
-                             template_dir="./templates")
+                             template_dir="./templates",
+                             output_dir="./resources/rules/")
         self.log = log
 
     def generate_rules(self, meta):
-        krb = ""
+        krb = []
         for rule in meta["rules"]:
+            aux = {}
             for key in rule.keys():
                 if key != "meta":
                     f = getattr(self, "_krb_"+key)
-                    krb += f(meta, meta["templates"][key], rule[key])
-        #HERE MONTAR cODIGO
+                    aux[key] = f(meta, meta["templates"][key], rule[key])
+                else:
+                    aux[key] = rule[key]
+            krb.append(aux)
+        krb = self._order_krb(krb)
+        krb = self._generate_str_krb(krb)
+        if self._write_krb_file(meta["name"], krb):
+            return krb
+        else:
+            return False
 
-        # print krb
+    def _write_krb_file(self, name, krb):
+        try:
+            with open(self.conf["output_dir"] + name + ".krb", 'w+') as ffile:
+                ffile.write(krb)
+            return True
+        except Exception:
+            self.output("Error writing KRB File, dir: " +
+                        self.conf["output_dir"], "critical")
+            return False
+
+    def _generate_str_krb(self, krb):
+        toret = ""
+        for rul in krb:
+            toret += rul["name"]
+            toret += rul["toret"]
+            toret += "\twhen\n"
+            toret += rul["true"]
+            toret += rul["false"]
+            toret += rul["value"]
+            toret += rul["call"]
+            toret += "\n"
+        toret += """\nbc_extras
+    import os
+    import json
+    import sys
+    import thread
+    from paho.mqtt import publish
+    sys.path.insert(0, './resources/')
+    sys.path.insert(0, './ifaces/')
+    sys.path.insert(0, './dbcon/')
+    sys.path.insert(0, './modules/')
+    """
+        # HERE TO DO CUSTOM IMPORTS
+        return toret
+
+    def _order_krb(self, krb):
+        toret = []
+        for i in range(0, len(krb)):
+            # HERE HARDCODE
+            aux = 99999
+            comp = {}
+            for k in krb:
+                if k["meta"]["priority"] < aux and k not in toret:
+                    aux = k["meta"]["priority"]
+                    comp = k
+            toret.append(comp)
+        return toret
 
     def _krb_true(self,
                   meta,
@@ -142,9 +196,6 @@ class Generator:
                         manifest["conf"]["templates"], "critical")
             return toret
 
-    def generate_krb_file(self, properties):
-        pass
-
     def get_manifest(self,
                      name):
         toret = {}
@@ -199,8 +250,6 @@ class Generator:
             for tr in rul["value"]:
                 if tr not in varss["signal"] and \
                         tr.keys()[0] != "Trigger":
-                    if tr[tr.keys()[0]][0] == "$":
-                        tr[tr.keys()[0]] = ""
                     varss["signal"].append(tr)
         return varss
 
@@ -214,15 +263,16 @@ class Generator:
         if len(varss["status"]) == 0:
             toret["status"] += ESPACES + "pass"
         for sig in varss["signal"]:
-            if type(sig[sig.keys()[0]]) is str:
-                sig[sig.keys()[0]] = "\"\""
-
+            aux = copy.deepcopy(sig[sig.keys()[0]])
+            if type(sig[sig.keys()[0]]) is str or \
+                    sig[sig.keys()[0]][0] == "$":
+                aux = "\"\""
             toret["signal"] += ESPACES + \
                 "self." +\
                 sig.keys()[0] +\
                 "=" + \
                 "obj(" +\
-                sig[sig.keys()[0]] + \
+                aux + \
                 ")\n"
 
         for sig in varss["status"]:

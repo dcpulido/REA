@@ -1,0 +1,21 @@
+GenericRuleName
+	toret(test,ex.result(),ex.toret())
+	when
+		Context.Status(itsSignal,True)
+		Context.Trigger(welcome)
+		Context.Signal(status,$stat)
+		python(exp.somethin())
+		python(exp.something2())
+
+
+bc_extras
+    import os
+    import json
+    import sys
+    import thread
+    from paho.mqtt import publish
+    sys.path.insert(0, './resources/')
+    sys.path.insert(0, './ifaces/')
+    sys.path.insert(0, './dbcon/')
+    sys.path.insert(0, './modules/')
+    

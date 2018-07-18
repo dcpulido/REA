@@ -20,5 +20,7 @@
         "ret": "ex.toret()",
         "result": "ex.result()"
     },
-    "meta": {}
+    "meta": {
+        "priority":0
+    }
 }
